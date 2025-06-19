@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja de Materiais de Construção</title>
+    <!-- Inclui Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Define a fonte Inter para todo o documento -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Inclui DOMPurify para sanitização do HTML gerado pelo LLM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.6/purify.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Cor de fundo suave */
+        }
+        /* Classe para esconder páginas não ativas e modais */
+        .page-hidden {
+            display: none !important; /* Adicionado !important para garantir que esteja sempre oculto */
+        }
+        /* Estilo para links de navegação */
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        /* Estilo para formulários */
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db; /* Cor da borda */
+            border-radius: 0.5rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            color: #1f2937; /* Cor do texto para inputs */
+        }
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            resize: vertical; /* Permite redimensionar verticalmente */
+            color: #1f2937; /* Cor do texto para textareas */
+        }
+        .form-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #3b82f6; /* Cor primária do botão */
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        .form-button:hover {
+            background-color: #2563eb; /* Cor mais escura no hover */
+            transform: translateY(-1px);
+        }
+        .form-button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments for image gallery */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* 150px minimum per image, adapts */
+            gap: 1rem; /* Space between images */
+        }
+        @media (min-width: 640px) { /* Small screens (sm) */
+            .image-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens */
+            }
+        }
+        @media (min-width: 768px) { /* Medium screens (md) */
+            .image-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 columns on medium screens */
+            }
+        }
+        @media (min-width: 1024px) { /* Large screens (lg) */
+            .image-grid {
+                grid-template-columns: repeat(5, 1fr); /* 5 columns on large screens */
+            }
+        }
+        /* Estilo para o destaque da pesquisa */
+        .highlight {
+            background-color: #fcd34d; /* Amarelo 300 do Tailwind */
+            border-radius: 0.25rem; /* cantos arredondados */
+            padding: 0 0.25rem; /* Pequeno padding para o destaque */
+        }
+
+        /* Loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Estilo para a área de resposta do Assistente DIY */
+        #diyAssistantResponse {
+            max-height: 200px; /* Define uma altura máxima para a área de resposta */
+            overflow-y: auto; /* Adiciona uma barra de rolagem vertical se o conteúdo exceder a altura máxima */
+            padding: 1rem; /* Adicionado para melhor visualização do conteúdo */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Cabeçalho Fixo -->
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-3xl font-bold mb-4 sm:mb-0">Construção Forte</h1>
+            <!-- Navegação -->
+            <nav class="flex flex-wrap justify-center sm:justify-start gap-4 mb-4 sm:mb-0">
+                <a href="#" onclick="showPage('home')" class="nav-link">Início</a>
+                <a href="#" onclick="showPage('produtos')" class="nav-link">Produtos</a>
+                <a href="#" onclick="showPage('contato')" class="nav-link">Contato</a>
+            </nav>
+            <!-- Formulário de Pesquisa -->
+            <form id="searchForm" class="flex w-full sm:w-auto">
+                <input type="search" placeholder="Pesquisar materiais..." class="form-input flex-grow mr-2 px-3 py-2 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <button type="submit" class="form-button bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-md">Pesquisar</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        <!-- Página Inicial -->
+        <div id="home" class="page-content bg-white p-6 md:p-8 rounded-lg shadow-lg mb-8">
+            <h2 class="text-4xl font-extrabold text-center text-blue-700 mb-6">Bem-vindo à Construção Forte!</h2>
+            <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                Sua parceira ideal para todos os seus projetos de construção. Na Construção Forte, oferecemos uma vasta gama de materiais de alta qualidade, desde o básico ao acabamento, garantindo que sua obra seja um sucesso do início ao fim.
+            </p>
+            <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                Explore nosso catálogo, encontre as melhores opções para sua necessidade e conte com nossa equipe especializada para um atendimento personalizado. Qualidade, preço justo e entrega rápida você encontra aqui!
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+                <button onclick="showPage('produtos')" class="form-button bg-green-500 hover:bg-green-600 px-6 py-3 text-lg rounded-full shadow-md">Ver Produtos</button>
+                <button onclick="showPage('contato')" class="form-button bg-purple-500 hover:bg-purple-600 px-6 py-3 text-lg rounded-full shadow-md">Fale Conosco</button>
+                <!-- Novo botão para o Assistente DIY -->
+                <button onclick="showDiyAssistantModal()" class="form-button bg-pink-500 hover:bg-pink-600 px-6 py-3 text-lg rounded-full shadow-md">✨ Assistente de Projeto DIY ✨</button>
+            </div>
+            <div class="mt-12 p-6 bg-blue-50 rounded-lg">
+                <h3 class="text-2xl font-bold text-blue-800 mb-4">Por que escolher a Construção Forte?</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li><strong class="text-blue-700">Qualidade Garantida:</strong> Trabalhamos apenas com os melhores fornecedores do mercado.</li>
+                    <li><strong class="text-blue-700">Preços Competitivos:</strong> Ofertas imbatíveis para você economizar sem abrir mão da qualidade.</li>
+                    <li><strong class="text-blue-700">Variedade de Produtos:</strong> Tudo o que você precisa em um só lugar.</li>
+                    <li><strong class="text-blue-700">Atendimento Personalizado:</strong> Nossa equipe está pronta para te ajudar a encontrar as melhores soluções.</li>
+                    <li><strong class="text-blue-700">Entrega Rápida:</strong> Agilidade para que sua obra não pare!</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Página de Produtos (Álbum de Fotos) -->
+        <div id="produtos" class="page-content bg-white p-6 md:p-8 rounded-lg shadow-lg mb-8 page-hidden">
+            <h2 class="text-4xl font-extrabold text-center text-blue-700 mb-8">Nosso Álbum de Materiais</h2>
+            <div class="image-grid">
+                <!-- Linha 1 -->
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/cimento.webp" alt="Imagem de sacos de cimento" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Cimento</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/tijolo.webp" alt="Imagem de tijolos empilhados" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Tijolos</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/areia.jpeg" alt="Imagem de pilha de areia" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Areia</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/brita.jpeg" alt="Imagem de brita" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Brita</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/ferragem.jpeg" alt="Imagem de vergalhões de ferro" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Ferragens</p>
+                </div>
+
+                <!-- Linha 2 -->
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/telhas.jpeg" alt="Imagem de telhas de cerâmica" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Telhas</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/tubos.jpg" alt="Imagem de tubos de PVC" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Tubos PVC</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/fios e cabos.jpeg" alt="Imagem de rolos de fios e cabos elétricos" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Fios e Cabos</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/madeira.jpg" alt="Imagem de tábuas de madeira" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Madeira</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/tinta.jpeg" alt="Imagem de latas de tinta coloridas" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Tintas</p>
+                </div>
+
+                <!-- Linha 3 -->
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/pisos e azuleijos.jpg" alt="Imagem de pisos e azulejos" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Pisos e Azulejos</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/Sanitarios.jpg" alt="Imagem de bacias sanitárias e pias" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Louças Sanitárias</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/portas e janelas.jpeg" alt="Imagem de portas e janelas" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Portas e Janelas</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/Materiais-hidraulicos.jpg" alt="Imagem de conexões hidráulicas" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Material Hidráulico</p>
+                </div>
+                <div class="rounded-lg overflow-hidden shadow-md transform hover:scale-105 transition duration-300">
+                    <img src="img/ferramentas.jpg" alt="Imagem de ferramentas de construção" class="w-full h-48 object-cover">
+                    <p class="p-2 text-center text-gray-700 font-semibold">Ferramentas</p>
+                </div>
+            </div>
+            <p class="text-center text-lg text-gray-600 mt-8">Temos uma vasta gama de produtos para sua construção! Venha conferir.</p>
+        </div>
+
+        <!-- Página de Contato -->
+        <div id="contato" class="page-content bg-white p-6 md:p-8 rounded-lg shadow-lg mb-8 page-hidden">
+            <h2 class="text-4xl font-extrabold text-center text-blue-700 mb-8">Entre em Contato Conosco</h2>
+
+            <!-- Informações de Contato -->
+            <div class="mb-10 text-center">
+                <p class="text-lg text-gray-700 mb-2">Estamos prontos para atendê-lo!</p>
+                <p class="text-xl font-semibold text-blue-600">Telefone: (XX) XXXX-XXXX</p>
+                <p class="text-xl font-semibold text-blue-600">Email: Construção_Forte@gmail.com</p>
+                <p class="text-lg text-gray-700 mt-4">Endereço: Rua da Construção, Nº12, Bairro Forte , Cidade Eletrica - BR</p>
+            </div>
+
+            <!-- Formulário de Orçamento -->
+            <div class="max-w-3xl mx-auto bg-blue-50 p-6 rounded-lg shadow-inner">
+                <h3 class="text-3xl font-bold text-center text-blue-800 mb-6">Solicite um Orçamento</h3>
+                <form id="budgetForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="budget_name" class="block text-gray-700 text-sm font-bold mb-2">Nome Completa:</label>
+                        <input type="text" id="budget_name" name="budget_name" class="form-input" placeholder="Seu nome" required>
+                    </div>
+                    <div>
+                        <label for="budget_email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                        <input type="email" id="budget_email" name="budget_email" class="form-input" placeholder="seu.email@exemplo.com" required>
+                    </div>
+                    <div>
+                        <label for="budget_phone" class="block text-gray-700 text-sm font-bold mb-2">Telefone:</label>
+                        <input type="tel" id="budget_phone" name="budget_phone" class="form-input" placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                    <div>
+                        <label for="material_needed" class="block text-gray-700 text-sm font-bold mb-2">Material Necessário:</label>
+                        <input type="text" id="material_needed" name="material_needed" class="form-input" placeholder="Ex: Cimento, Tijolos, Areia" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="budget_quantity" class="block text-gray-700 text-sm font-bold mb-2">Quantidade Estimada:</label>
+                        <input type="text" id="budget_quantity" name="budget_quantity" class="form-input" placeholder="Ex: 50 sacos de cimento, 1000 tijolos">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="budget_message" class="block text-gray-700 text-sm font-bold mb-2">Mensagem Adicional (opcional):</label>
+                        <textarea id="budget_message" name="budget_message" rows="4" class="form-textarea" placeholder="Descreva mais detalhes sobre seu orçamento..."></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex justify-center">
+                        <button type="submit" class="form-button w-full md:w-auto">Enviar Orçamento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé Fixo -->
+    <footer class="bg-gray-800 text-white p-4 shadow-inner mt-auto">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="text-center md:text-left mb-4 md:mb-0">
+                <p>&copy; 2025 Construção Forte. Todos os direitos reservados.</p>
+                <p class="text-sm">Rua da Construção, 123, Bairro Exemplo, Cidade Fictícia - BR</p>
+            </div>
+            <!-- Formulário de Contato no Rodapé -->
+            <div class="w-full md:w-1/2 lg:w-1/3">
+                <h3 class="text-xl font-bold text-center mb-4">Fale Conosco Rápido</h3>
+                <form id="contactFooterForm" class="flex flex-col gap-2">
+                    <input type="text" name="name" placeholder="Seu Nome" class="form-input text-gray-800" required>
+                    <input type="email" name="email" placeholder="Seu Email" class="form-input text-gray-800" required>
+                    <textarea name="message" rows="3" placeholder="Sua Mensagem" class="form-textarea text-gray-800" required></textarea>
+                    <button type="submit" class="form-button w-full">Enviar Mensagem</button>
+                </form>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Search Results Modal -->
+    <div id="searchMessageModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 page-hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4 text-center">
+            <h3 id="searchModalTitle" class="text-2xl font-bold text-gray-800 mb-4">Resultado da Pesquisa</h3>
+            <p id="searchModalMessage" class="text-gray-700 text-lg mb-6"></p>
+            <button onclick="hideSearchMessage()" class="form-button bg-blue-600 hover:bg-blue-700">Fechar</button>
+        </div>
+    </div>
+
+    <!-- DIY Assistant Modal -->
+    <div id="diyAssistantModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 page-hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-xl w-full mx-4 flex flex-col">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">✨ Assistente de Projeto DIY ✨</h3>
+            <p class="text-gray-600 mb-4 text-center">Descreva seu projeto DIY e deixe-nos ajudar com sugestões de materiais e passos!</p>
+            <textarea id="diyProjectDescription" class="form-textarea mb-4" rows="6" placeholder="Ex: 'Quero construir uma pequena prateleira de madeira para livros', ou 'Preciso reformar meu banheiro, incluindo troca de pisos e louças.'"></textarea>
+            <div class="flex justify-center gap-4 mb-4">
+                <button onclick="generateDiySuggestions()" class="form-button">Gerar Sugestões</button>
+                <button onclick="hideDiyAssistantModal()" class="form-button bg-gray-500 hover:bg-gray-600">Fechar</button>
+            </div>
+            <div id="diyAssistantLoader" class="loader page-hidden"></div>
+            <div id="diyAssistantResponse" class="bg-blue-50 p-4 rounded-md mt-4 text-gray-800 prose max-w-none text-left">
+                <!-- A resposta do LLM aparecerá aqui -->
+                <p>Suas sugestões aparecerão aqui. Tente descrever seu projeto em detalhes!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global map to store original content of pages for highlighting
+        const originalPageContent = new Map();
+
+        // --- Funções do Modal de Pesquisa ---
+        function showSearchMessage(title, message) {
+            document.getElementById('searchModalTitle').innerText = title;
+            document.getElementById('searchModalMessage').innerText = message;
+            document.getElementById('searchMessageModal').classList.remove('page-hidden');
+        }
+
+        function hideSearchMessage() {
+            document.getElementById('searchMessageModal').classList.add('page-hidden');
+        }
+
+        // --- Funções do Assistente DIY Modal ---
+        function showDiyAssistantModal() {
+            document.getElementById('diyAssistantModal').classList.remove('page-hidden');
+            // Limpa o conteúdo anterior ao abrir o modal
+            document.getElementById('diyProjectDescription').value = '';
+            document.getElementById('diyAssistantResponse').innerHTML = '<p>Suas sugestões aparecerão aqui. Tente descrever seu projeto em detalhes!</p>';
+        }
+
+        function hideDiyAssistantModal() {
+            document.getElementById('diyAssistantModal').classList.add('page-hidden');
+        }
+
+        // --- Funções de Destaque e Página ---
+        function clearHighlights() {
+            document.querySelectorAll('.page-content').forEach(page => {
+                if (originalPageContent.has(page.id)) {
+                    // Restaura o conteúdo original da página a partir do mapa
+                    page.innerHTML = originalPageContent.get(page.id);
+                }
+            });
+        }
+
+        function highlightSearchTerm(searchTerm, pageId) {
+            clearHighlights(); // Clear any previous highlights first
+
+            if (!searchTerm) {
+                return 0; // No term to highlight
+            }
+
+            const pageElement = document.getElementById(pageId);
+            if (!pageElement) {
+                console.error(`Página com ID '${pageId}' não encontrada para pesquisa.`);
+                return 0;
+            }
+
+            // Get the original content from the map
+            let content = originalPageContent.get(pageId);
+            if (!content) {
+                // Fallback: if not in map, take current innerHTML and store it
+                content = pageElement.innerHTML;
+                originalPageContent.set(pageId, content);
+            }
+
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            // Regular expression to match the search term globally and case-insensitively
+            // 'gi' means global (find all occurrences) and case-insensitive
+            const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); // Escapa caracteres especiais do regex
+
+            let matchCount = 0;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+
+            // Use TreeWalker to find all text nodes within the page content
+            const walker = document.createTreeWalker(
+                tempDiv,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            let node;
+            const nodesToProcess = [];
+            while ((node = walker.nextNode())) {
+                // Skip text nodes inside script or style tags
+                if (node.parentNode.nodeName !== 'SCRIPT' && node.parentNode.nodeName !== 'STYLE') {
+                    nodesToProcess.push(node);
+                }
+            }
+
+            nodesToProcess.forEach(textNode => {
+                const originalText = textNode.nodeValue;
+                if (originalText && originalText.toLowerCase().includes(lowerCaseSearchTerm)) {
+                    const newHtml = originalText.replace(regex, (match) => {
+                        matchCount++;
+                        // Wrap the matched text in a span with highlight class
+                        return `<span class="highlight">${match}</span>`;
+                    });
+
+                    // Create a temporary element to hold the new HTML and replace the text node
+                    const span = document.createElement('span');
+                    span.innerHTML = newHtml;
+                    textNode.parentNode.replaceChild(span, textNode);
+                }
+            });
+
+            // Update the innerHTML of the actual page element
+            pageElement.innerHTML = tempDiv.innerHTML;
+
+            return matchCount;
+        }
+
+        function showPage(pageId) {
+            clearHighlights(); // Clear highlights before showing a new page
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.remove('page-hidden');
+                } else {
+                    page.classList.add('page-hidden');
+                }
+            });
+            // Opcional: rolar para o topo da página ao mudar
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Integração com Gemini API para Assistente DIY ---
+        async function generateDiySuggestions() {
+            const projectDescription = document.getElementById('diyProjectDescription').value.trim();
+            const responseDiv = document.getElementById('diyAssistantResponse');
+            const loader = document.getElementById('diyAssistantLoader');
+
+            if (!projectDescription) {
+                responseDiv.innerHTML = '<p class="text-red-600">Por favor, descreva seu projeto para receber sugestões.</p>';
+                return;
+            }
+
+            responseDiv.innerHTML = ''; // Clear previous response
+            loader.classList.remove('page-hidden'); // Show loader
+
+            try {
+                // Construct the prompt for the LLM
+                const prompt = `Você é um assistente de projetos de construção para uma loja de materiais. Dada a seguinte descrição de um projeto DIY, sugira uma lista de materiais de construção necessários e, se possível, alguns passos básicos ou dicas. Formate a resposta de forma clara e organizada, usando listas e parágrafos.
+                Descrição do projeto: "${projectDescription}"`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = { contents: chatHistory };
+                // Sua chave de API Gemini fornecida: AIzaSyA3O07cPycrOlMvylOlU3hJ4MSUAmhUGBs
+                const apiKey = "AIzaSyA3O07cPycrOlMvylOlU3hJ4MSUAmhUGBs"; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Erro na API Gemini: ${response.status} - ${errorData.error.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    // Usa DOMPurify para sanitizar o HTML e evitar XSS
+                    responseDiv.innerHTML = DOMPurify.sanitize(text.replace(/\n/g, '<br>')); 
+                } else {
+                    responseDiv.innerHTML = '<p class="text-red-600">Não foi possível gerar sugestões. Tente reformular seu projeto.</p>';
+                    console.warn('Estrutura de resposta da Gemini API inesperada:', result);
+                }
+            } catch (error) {
+                console.error('Erro ao chamar a API Gemini:', error);
+                responseDiv.innerHTML = `<p class="text-red-600">Ocorreu um erro ao gerar sugestões: ${error.message}. Por favor, tente novamente.</p>`;
+            } finally {
+                loader.classList.add('page-hidden'); // Hide loader
+            }
+        }
+
+
+        // --- Event Listeners dos Formulários ---
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const searchTerm = event.target.querySelector('input[type="search"]').value.trim();
+
+            const currentPageElement = document.querySelector('.page-content:not(.page-hidden)');
+            const currentPageId = currentPageElement ? currentPageElement.id : '';
+
+            if (!searchTerm) {
+                showSearchMessage('Pesquisa Vazia', 'Por favor, digite um termo para pesquisar.');
+                clearHighlights();
+                return;
+            }
+
+            const matchCount = highlightSearchTerm(searchTerm, currentPageId);
+
+            let message = '';
+            if (matchCount > 0) {
+                message = `O termo "${searchTerm}" foi encontrado ${matchCount} vez(es) nesta página.`;
+            } else {
+                message = `O termo "${searchTerm}" não foi encontrado nesta página.`;
+            }
+            showSearchMessage('Resultado da Pesquisa', message);
+        });
+
+        document.getElementById('budgetForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const budgetData = {};
+            for (let [key, value] of formData.entries()) {
+                budgetData[key] = value;
+            }
+            console.log('Orçamento enviado:', budgetData);
+            showSearchMessage('Orçamento Enviado', 'Sua solicitação de orçamento foi enviada com sucesso!');
+            event.target.reset();
+        });
+
+        document.getElementById('contactFooterForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const contactData = {};
+            for (let [key, value] of formData.entries()) {
+                contactData[key] = value;
+            }
+            console.log('Contato do rodapé enviado:', contactData);
+            showSearchMessage('Mensagem Enviada', 'Sua mensagem de contato foi enviada com sucesso!');
+            event.target.reset();
+        });
+
+        // --- Inicialização ao Carregar a Página ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Garante que ambos os modais estejam escondidos ao carregar
+            document.getElementById('searchMessageModal').classList.add('page-hidden');
+            document.getElementById('diyAssistantModal').classList.add('page-hidden');
+
+            // Percorre todas as páginas de conteúdo e armazena o HTML original
+            document.querySelectorAll('.page-content').forEach(page => {
+                originalPageContent.set(page.id, page.innerHTML);
+            });
+            showPage('home'); // Mostra a página inicial por padrão
+        });
+    </script>
+</body>
+</html>
